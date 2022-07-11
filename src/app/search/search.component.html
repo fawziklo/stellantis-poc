@@ -1,0 +1,120 @@
+<div [formGroup]="searchForm">
+  <mat-form-field floatLabel="never" style="width: 500px;">
+    <input formControlName="search" matInput placeholder="Search" #search_word (keyup.enter)="submit()"
+      (keyup.backspace)="clearSearch()" [matAutocomplete]="auto">
+    <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete">
+      <mat-option *ngFor="let sugText of suggestion?.text; let index = index" [value]="sugText">
+        <p (click)="submit()">{{sugText}}</p>
+      </mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
+
+  <button mat-mini-fab color="primary" (click)="submit()" style="margin-left: 10px;">
+    <mat-icon>search</mat-icon>
+  </button>
+  <div *ngIf="makeSearch" style="margin-bottom: 10px;">
+    <mat-hint *ngIf="searchCount > 0">{{searchCount}} results found.</mat-hint>
+  </div>
+</div>
+
+<div *ngIf="showSpinner && (semResponseI?.length == 0 && serviceValueResponse?.length == 0) "
+  style="display: flex; justify-content:center;margin-top:20%;">
+  <mat-spinner></mat-spinner>
+</div>
+
+
+<mat-card *ngIf="semResponseI?.length != 0">
+  <div>
+    <p><strong>Semantic Search</strong></p>
+    <mat-card *ngFor="let sem of semResponseI" style="background: #F2EEFE;">
+      <h1>{{search_word.value}}</h1>
+      <strong> The extracted text is : </strong> <span [innerHTML]="sem.highlights ? sem.highlights : sem.text "></span>
+    </mat-card>
+  </div>
+</mat-card>
+
+<mat-card *ngIf="serviceValueResponse?.length != 0" style="margin-top: 20px;">
+  <div style="margin-top: 10px;">
+    <p><strong>Normal Search</strong></p>
+    <mat-card *ngFor="let creationDate of metadataCreationDate; let index = index"
+      style="margin-bottom: 10px;background: #F8F7FB;">
+      <h1 *ngIf="search_word?.value">{{search_word?.value}}</h1>
+      <p *ngIf="creationDate"><strong>Creation date</strong> : {{creationDate | date: 'yyyy/MM/dd'}} </p>
+
+      <div *ngIf="metadataStorageName[index]" style="display: flex;">
+        <p><strong>Related attachment</strong>:</p>
+
+        <mat-chip color="primary" selected (click)="onNavigate(metadataStorageName[index])"
+          style="margin-left: 5px;bottom: 5px;cursor:pointer;"><a
+            style="text-decoration: underline;">{{metadataStorageName[index]}} </a></mat-chip>
+      </div>
+
+      <p *ngIf="metadataAuthor[index] != null"><strong>Author</strong> : {{metadataAuthor[index]}} </p>
+
+      <p *ngIf="captionsHighlights[index] != null;else other"><strong>Captured text</strong> : <span
+          [innerHTML]="captionsHighlights[index]"></span> </p>
+      <ng-template #other>
+        <p *ngIf="captionsText[index] != null"><strong>Captured text</strong> : <span
+            [innerHTML]="captionsText[index]"></span> </p>
+      </ng-template>
+      <div>
+        <mat-slide-toggle (change)="textSlide($event)" [checked]="checkedText" color="warn">Do you want to see other
+          text?</mat-slide-toggle>
+        <p *ngIf="highlightsMergedContent[index] != null && textSliderState">
+          <span [innerHTML]="highlightsMergedContent[index]"></span>
+        </p>
+      </div>
+
+      <div>
+        <mat-slide-toggle (change)="imageSlide($event)" [checked]="checkedImage" color="warn">
+          Do you want to see other text captured from images?
+        </mat-slide-toggle>
+        <p *ngIf="highlightsText[index] != null && imageSliderState">
+          <span [innerHTML]="highlightsText[index]"></span>
+        </p>
+      </div>
+
+
+      <p><strong>Organizations & people</strong> : </p>
+
+      <mat-chip-list aria-label="Fish selection">
+        <ng-container *ngFor="let orga of organizations[index]">
+          <mat-chip color="primary" selected>{{orga}}</mat-chip>
+        </ng-container>
+      </mat-chip-list>
+
+
+      <mat-chip-list aria-label="Fish selection">
+        <ng-container *ngFor="let person of people[index]">
+          <mat-chip color="primary" selected>{{person}}</mat-chip>
+        </ng-container>
+      </mat-chip-list>
+
+      <h1 style="margin-top: 10px;"> Related images</h1>
+
+
+      <!--       <button *ngIf="selectedIdx !== index" mat-fab color="warn"
+        (click)="showGallery(metadataStoragePaths[index],index)">
+        <mat-icon>collections</mat-icon>
+      </button> -->
+      <mat-expansion-panel (opened)="showGallery(metadataStoragePaths[index],index)" (closed)="imagesMetaData = []">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            Image gallery
+          </mat-panel-title>
+          <mat-panel-description>
+            Captured images by Azure Search
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <app-gallery *ngIf="selectedIdx === index && imagesMetaData" [imagesMetaData]="imagesMetaData"></app-gallery>
+      </mat-expansion-panel>
+
+    </mat-card>
+  </div>
+</mat-card>
+
+<mat-card *ngIf="serviceValueResponse?.length == 0 && semResponseI?.length == 0 && makeSearch && searchCount == 0">
+  <h1 style="text-align: center">Sorry nothing found..</h1>
+  <img mat-card-image src="../../assets/preview.jpg" alt="Photo of 404 info not found">
+
+</mat-card>
